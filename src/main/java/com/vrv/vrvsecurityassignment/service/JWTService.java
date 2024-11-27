@@ -14,63 +14,73 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-@Service
+@Service  // Marks this class as a service to be managed by Spring's container
 public class JWTService {
 
-    private String secretKey = "";
+    private String secretKey = "";  // Secret key for signing JWTs
 
+    // Constructor that generates a base64-encoded secret key for HMAC algorithm
     public JWTService() {
         this.secretKey = Base64.getEncoder().encodeToString(Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256).getEncoded());
     }
 
+    // Method to generate a JWT token for a given username and role
     public String generateToken(String username, String role) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", role);
+        claims.put("role", role);  // Storing the role as a claim in the token
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(username)
-                .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-                .signWith(getKey())
-                .compact();
+                .setClaims(claims)  // Add custom claims
+                .setSubject(username)  // Set the subject (username)
+                .setIssuedAt(new Date(System.currentTimeMillis()))  // Set the issued time
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))  // Set token expiration time (10 hours)
+                .signWith(getKey())  // Sign the token with the secret key
+                .compact();  // Build and return the JWT
     }
 
+    // Helper method to get the secret key used to sign JWTs
     private SecretKey getKey() {
-        byte[] bytes = Decoders.BASE64.decode(secretKey);
-        return Keys.hmacShaKeyFor(bytes);
+        byte[] bytes = Decoders.BASE64.decode(secretKey);  // Decode the base64-encoded key
+        return Keys.hmacShaKeyFor(bytes);  // Return the HMAC key
     }
 
+    // Method to extract the username (subject) from a JWT token
     public String extractUserName(String token) {
-        return extractClaim(token, Claims::getSubject);
+        return extractClaim(token, Claims::getSubject);  // Extract the subject (username)
     }
 
+    // Method to extract the role from the JWT token
     public String extractRole(String token) {
-        return extractClaim(token, claims -> claims.get("role", String.class));
+        return extractClaim(token, claims -> claims.get("role", String.class));  // Extract role from claims
     }
 
+    // Generic method to extract claims (e.g., username or role) from the token
     private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimResolver.apply(claims);
+        final Claims claims = extractAllClaims(token);  // Extract all claims from the token
+        return claimResolver.apply(claims);  // Apply the claim resolver to extract the specific claim
     }
 
+    // Method to parse and extract all claims from a JWT token
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getKey())
+                .setSigningKey(getKey())  // Set the signing key to verify the JWT's signature
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseClaimsJws(token)  // Parse the token and extract claims
+                .getBody();  // Return the claims body
     }
 
+    // Method to validate the JWT token by comparing username and checking if it's expired
     public boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUserName(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        final String username = extractUserName(token);  // Extract the username from the token
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);  // Check if username matches and token is not expired
     }
 
+    // Method to check if the token is expired
     private boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        return extractExpiration(token).before(new Date());  // Check if the token's expiration date is before the current time
     }
 
+    // Method to extract the expiration date from the token
     private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+        return extractClaim(token, Claims::getExpiration);  // Extract the expiration date claim
     }
 }

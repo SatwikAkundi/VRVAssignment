@@ -6,14 +6,18 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Data;
 
-
+// Entity class representing the Users table in the database
 @Entity
-@Data
+@Data  // Lombok annotation to automatically generate getters, setters, toString, and other methods
 public class Users {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    private String username;
-    private String password;
-    private String role; // New field for RBAC
+
+    @Id  // Marks this field as the primary key in the database
+    @GeneratedValue(strategy = GenerationType.IDENTITY)  // Auto-generates the ID field (identity column in database)
+    private int id;  // Unique identifier for each user
+
+    private String username;  // The username of the user (used for login)
+
+    private String password;  // The password of the user (stored in a hashed form)
+
+    private String role;  // The role of the user (e.g., USER, ADMIN) for role-based access control (RBAC)
 }

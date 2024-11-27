@@ -20,14 +20,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Autowired
-    private UserDetailsService userDetailsService;
+    private UserDetailsService userDetailsService; // Service to load user details for authentication
 
     @Autowired
-    private JWTFilter jwtFilter;
+    private JWTFilter jwtFilter; // JWT filter to handle authentication based on JWT tokens
 
+    // Security configuration for HTTP requests
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        return http.csrf(csrf -> csrf.disable())
+        return http.csrf(csrf -> csrf.disable()) // Disable CSRF protection as we are using stateless authentication
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/register").permitAll()  // Allow everyone to access /register
                         .requestMatchers("/login").permitAll()  // Allow everyone to access /login
@@ -35,18 +36,20 @@ public class SecurityConfig {
                         .requestMatchers("/user/**").hasAuthority("USER")  // Protect user pages
                         .anyRequest().authenticated())  // Other paths require authentication
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless authentication
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class) // Add JWT filter before the default authentication filter
                 .build();
     }
 
+    // Configure authentication provider with BCryptPasswordEncoder for password encoding and user details service for user lookup
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setPasswordEncoder(new BCryptPasswordEncoder(12));
-        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(new BCryptPasswordEncoder(12)); // Password encoder with strength 12
+        provider.setUserDetailsService(userDetailsService); // Set the user details service
         return provider;
     }
 
+    // Bean to create and provide an AuthenticationManager, which manages authentication processes
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
